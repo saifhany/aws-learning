@@ -6,7 +6,7 @@ app.get('/hello', (req, res) => {
 });
 
 if (require.main === module) {
-  app.listen(3030, () => console.log('Server running on port 3000'));
+  app.listen(3030, () => console.log('Server running on port 3030'));
 }
 
 module.exports = app;
