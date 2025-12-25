@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 
 app.get('/hello', (req, res) => {
-  res.json({ message: 'Hello Sefo!' });
+  res.json({ message: 'Hello Sefo! CI/CD is working!' });
 });
 
 if (require.main === module) {
