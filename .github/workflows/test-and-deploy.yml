@@ -1,10 +1,14 @@
 name: CI/CD Pipeline
 
 on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  
   push:
     branches:
       - main
-      - production
 
 jobs:
   test:
@@ -16,28 +20,49 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+          cache: 'npm'  
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci  
 
       - name: Run tests
         run: npm test
 
+
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/production'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/maon'
     runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v3
 
       - name: SSH to EC2 and Deploy
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
+          port: 22
           script: |
             cd /home/ubuntu/hello-sefo
+            
+            # Pull latest changes
             git pull origin production
+            
+            # Stop containers
             docker-compose down
+            
+            # Build and start containers
             docker-compose up -d --build
+            
+            # Clean up old images (optional)
+            docker image prune -f
+
+      - name: Deployment Status
+        if: success()
+        run: echo "✅ Deployment successful!"
+
+      - name: Deployment Failed
+        if: failure()
+        run: echo "❌ Deployment failed!"
